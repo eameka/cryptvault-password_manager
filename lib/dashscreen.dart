@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'CryptVault.dart';
 
@@ -15,6 +17,7 @@ class Dashscreen extends StatelessWidget {
     return MaterialApp(
       title: 'CryptVault',
       theme: ThemeData(),
+      debugShowCheckedModeBanner: false,
       home: const MyVault(),
     );
   }
@@ -28,7 +31,7 @@ class MyVault extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('CryptVault'),
+        title: const Text('CryptVault Dashboard'),
         backgroundColor: Colors.blueAccent,
       ),
       backgroundColor: Colors.grey[850],
@@ -44,8 +47,53 @@ class MyVault extends StatelessWidget {
   }
 }
 
-class AddButton extends StatelessWidget {
-  const AddButton({super.key});
+class AddButton extends StatefulWidget {
+  const AddButton({Key? key}) : super(key: key);
+
+  @override
+  _AddButtonState createState() => _AddButtonState();
+}
+
+class _AddButtonState extends State<AddButton> {
+  List<VaultItem> vaultItems = [];
+  @override
+  void initState() {
+    super.initState();
+    fetchVaultItemsForUser();
+  }
+
+  fetchVaultItemsForUser() async {
+    try {
+      FirebaseAuth auth = FirebaseAuth.instance;
+      User? user = auth.currentUser;
+
+      if (user == null) {
+        return []; // Return an empty list if no user is logged in
+      }
+
+      String userEmail = user.email ?? ''; // Get the user's email
+
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('vault')
+          .where('user', isEqualTo: userEmail)
+          .get();
+
+      querySnapshot.docs.forEach((doc) {
+        print(doc);
+        vaultItems.add(VaultItem(
+          id: doc.id,
+          account: doc['account'],
+          password: doc['password'],
+          user: doc['user'],
+        ));
+      });
+
+      return vaultItems;
+    } catch (e) {
+      print('Error fetching vault items: $e');
+      return []; // Return an empty list on error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +102,47 @@ class AddButton extends StatelessWidget {
 
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+        Container(
+          height: MediaQuery.of(context).size.height *
+              0.3, // 40% of the screen's height
+          width: MediaQuery.of(context).size.width *
+              0.7, // 70% of the screen's width
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("You have"),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Text(
+                  vaultItems.length.toString(),
+                  style: TextStyle(color: Colors.blue, fontSize: 40),
+                ),
+              ),
+              Text("credentials in your vault."),
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0),
+                child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CryptVault(),
+                        ),
+                      );
+                    },
+                    child: Text("View credentials in Vault")),
+              )
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 100,
+        ),
         ElevatedButton(
           style: style,
           onPressed: () {
@@ -62,7 +151,7 @@ class AddButton extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const MyCustomForm()),
             );
           },
-          child: const Text('+'),
+          child: const Text('+ Add a credential'),
         ),
       ]),
     );
@@ -138,29 +227,81 @@ class MyCustomFormState extends State<MyCustomForm> {
               height: 20,
             ),
             OutlinedButton(
-                style:
-                    OutlinedButton.styleFrom(minimumSize: const Size(200, 50)),
-                onPressed: () {
-                  final vault = Vault(
-                    account: _accountController.text,
-                    password: _passController.text,
-                  );
-                  createVault(vault);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) {
-                      return CryptVault(
-                        accountController: _accountController.text,
-                        passController: _passController.text,
-                      );
-                    }),
-                  );
-                },
-                child: Text(
-                  'Add Credentials'.toUpperCase(),
-                  style: const TextStyle(
-                      color: Colors.blueAccent, fontWeight: FontWeight.bold),
-                ))
+              style: OutlinedButton.styleFrom(minimumSize: const Size(200, 50)),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (BuildContext context) {
+                    return const CupertinoAlertDialog(
+                      title: Text("Adding Credential"),
+                      content: Column(
+                        children: [
+                          CupertinoActivityIndicator(),
+                          SizedBox(height: 16),
+                          Text("Please wait..."),
+                        ],
+                      ),
+                    );
+                  },
+                );
+                addCredential(_accountController.text, _passController.text)
+                    .then((value) => {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return CupertinoAlertDialog(
+                                title: Text("Success"),
+                                content: Column(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Icon(
+                                        CupertinoIcons.check_mark_circled,
+                                        size: 45,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                        "Credential added to the vault successfully"),
+                                  ],
+                                ),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    child: const Text("Ok"),
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CryptVault(),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                ],
+                              );
+                            },
+                          ),
+                          print(value.message),
+                        });
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) {
+                //     return CryptVault(
+                //       accountController: _accountController.text,
+                //       passController: _passController.text,
+                //     );
+                //   }),
+                // );
+              },
+              child: Text(
+                'Add Credentials'.toUpperCase(),
+                style: const TextStyle(
+                    color: Colors.blueAccent, fontWeight: FontWeight.bold),
+              ),
+            )
           ],
         ),
       ),
@@ -168,28 +309,70 @@ class MyCustomFormState extends State<MyCustomForm> {
   }
 }
 
-Future createVault(Vault vault) async {
-  final docVault = FirebaseFirestore.instance.collection('vault').doc();
-  vault.id = docVault.id;
+// Future createVault(Vault vault) async {
+//   final docVault = FirebaseFirestore.instance.collection('vault').doc();
+//   vault.id = docVault.id;
 
-  final json = vault.toJson();
-  await docVault.set(json);
+//   final json = vault.toJson();
+//   await docVault.set(json);
+// }
+Future<InsertResponse> addCredential(String account, String password) async {
+  try {
+    FirebaseAuth auth = FirebaseAuth.instance;
+    User? user = auth.currentUser;
+
+    if (user == null) {
+      return InsertResponse(success: false, message: 'No user logged in.');
+    }
+
+    String userEmail = user.email ?? ''; // Get the user's email
+
+    await FirebaseFirestore.instance
+        .collection('vault')
+        .add({'account': account, 'password': password, "user": userEmail});
+
+    return InsertResponse(
+        success: true, message: 'Data inserted successfully.');
+  } catch (e) {
+    return InsertResponse(success: false, message: 'Error inserting data: $e');
+  }
 }
 
-class Vault {
-  String id;
+class InsertResponse {
+  final bool success;
+  final String message;
+
+  InsertResponse({required this.success, required this.message});
+}
+
+class VaultItem {
+  final String id;
   final String account;
   final String password;
+  final String user;
 
-  Vault({
-    this.id = '',
+  VaultItem({
+    required this.id,
     required this.account,
     required this.password,
+    required this.user,
   });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'Account': account,
-        'Password': password,
-      };
 }
+
+// class Vault {
+//   String id;
+//   final String account;
+//   final String password;
+
+//   Vault({
+//     this.id = '',
+//     required this.account,
+//     required this.password,
+//   });
+
+//   Map<String, dynamic> toJson() => {
+//         'id': id,
+//         'Account': account,
+//         'Password': password,
+//       };
+// }
