@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mini/dashscreen.dart';
 
 class CryptVault extends StatefulWidget {
   const CryptVault({Key? key}) : super(key: key);
@@ -69,7 +70,12 @@ class _CryptVaultState extends State<CryptVault> {
         title: const Text('All Credentials'),
         leading: IconButton(
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Dashscreen(),
+              ),
+            );
           },
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
@@ -91,47 +97,53 @@ class _CryptVaultState extends State<CryptVault> {
                 Text("Loading credentials")
               ],
             )
-          : ListView.builder(
-              itemCount: vaultItems.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const Icon(
-                    Icons.safety_check,
-                    color: Colors.blue,
-                    size: 35,
-                  ),
-                  title: Text(vaultItems[index].account),
-                  subtitle: Text(vaultItems[index].password),
-                  trailing: SizedBox(
-                    width: 100,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.edit),
-                          ),
-                        ),
-                        Expanded(
-                          child: IconButton(
-                            onPressed: () {
-                              final docVault = FirebaseFirestore.instance
-                                  .collection('vault')
-                                  .doc();
-
-                              docVault.delete();
-                            },
-                            icon: const Icon(
-                              Icons.delete_outlined,
+          : vaultItems.length < 1
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [Center(child: Text("No credentials added"))],
+                )
+              : ListView.builder(
+                  itemCount: vaultItems.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.safety_check,
+                        color: Colors.blue,
+                        size: 35,
+                      ),
+                      title: Text(vaultItems[index].account),
+                      subtitle: Text(vaultItems[index].password),
+                      trailing: SizedBox(
+                        width: 100,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: IconButton(
+                                onPressed: () {},
+                                icon: const Icon(Icons.edit),
+                              ),
                             ),
-                          ),
+                            Expanded(
+                              child: IconButton(
+                                onPressed: () {
+                                  final docVault = FirebaseFirestore.instance
+                                      .collection('vault')
+                                      .doc();
+
+                                  docVault.delete();
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outlined,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
+                    );
+                  },
+                ),
       // body: Container(
       //   padding: const EdgeInsets.all(8),
       //   child: ListView(

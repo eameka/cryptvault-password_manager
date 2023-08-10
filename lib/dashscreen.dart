@@ -55,6 +55,7 @@ class AddButton extends StatefulWidget {
 }
 
 class _AddButtonState extends State<AddButton> {
+  bool isLoading = true; // Initially set to true for loading
   List<VaultItem> vaultItems = [];
   @override
   void initState() {
@@ -88,6 +89,9 @@ class _AddButtonState extends State<AddButton> {
         ));
       });
 
+      setState(() {
+        isLoading = false;
+      });
       return vaultItems;
     } catch (e) {
       print('Error fetching vault items: $e');
@@ -116,13 +120,18 @@ class _AddButtonState extends State<AddButton> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("You have"),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Text(
-                  vaultItems.length.toString(),
-                  style: TextStyle(color: Colors.blue, fontSize: 40),
-                ),
-              ),
+              isLoading
+                  ? CupertinoActivityIndicator(
+                      radius: 35,
+                      color: Colors.blue,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        vaultItems.length.toString(),
+                        style: TextStyle(color: Colors.blue, fontSize: 40),
+                      ),
+                    ),
               Text("credentials in your vault."),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0),
@@ -231,7 +240,7 @@ class MyCustomFormState extends State<MyCustomForm> {
               onPressed: () {
                 showDialog(
                   context: context,
-                  barrierDismissible: true,
+                  barrierDismissible: false,
                   builder: (BuildContext context) {
                     return const CupertinoAlertDialog(
                       title: Text("Adding Credential"),
@@ -247,6 +256,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                 );
                 addCredential(_accountController.text, _passController.text)
                     .then((value) => {
+                          Navigator.pop(context),
                           showDialog(
                             context: context,
                             barrierDismissible: false,
