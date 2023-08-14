@@ -138,6 +138,28 @@ class _MySignupState extends State<MySignup> {
                                               },
                                             )
                                           }
+                                        else if (value.toString() ==
+                                            "[firebase_auth/invalid-email] The email address is badly formatted.")
+                                          {
+                                            showDialog(
+                                              context: context,
+                                              builder: (builder) {
+                                                return CupertinoAlertDialog(
+                                                  title: const Text("Alert"),
+                                                  content: const Text(
+                                                      "Invalid email"),
+                                                  actions: [
+                                                    CupertinoDialogAction(
+                                                      child: const Text("Ok"),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                    )
+                                                  ],
+                                                );
+                                              },
+                                            )
+                                          }
                                         else
                                           {
                                             showDialog(
@@ -222,6 +244,28 @@ class _MySignupState extends State<MySignup> {
                                                   title: const Text("Alert"),
                                                   content: const Text(
                                                       "Email account not registered."),
+                                                  actions: [
+                                                    CupertinoDialogAction(
+                                                      child: const Text("Ok"),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                    )
+                                                  ],
+                                                );
+                                              },
+                                            )
+                                          }
+                                        else if (value.toString() ==
+                                            "[firebase_auth/invalid-email] The email address is badly formatted.")
+                                          {
+                                            showDialog(
+                                              context: context,
+                                              builder: (builder) {
+                                                return CupertinoAlertDialog(
+                                                  title: const Text("Alert"),
+                                                  content: const Text(
+                                                      "Invalid email"),
                                                   actions: [
                                                     CupertinoDialogAction(
                                                       child: const Text("Ok"),
