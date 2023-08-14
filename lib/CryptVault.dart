@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mini/EditCredential.dart';
 import 'package:mini/dashscreen.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 class CryptVault extends StatefulWidget {
   const CryptVault({Key? key}) : super(key: key);
@@ -62,6 +64,8 @@ class _CryptVaultState extends State<CryptVault> {
     }
   }
 
+  bool isDeleting = false;
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -81,69 +85,104 @@ class _CryptVaultState extends State<CryptVault> {
         ),
         backgroundColor: Colors.blueAccent,
       ),
-      body: isLoading
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Center(
-                  child: CupertinoActivityIndicator(
-                    radius: 30,
-                    color: Colors.blue,
+      body: ModalProgressHUD(
+        inAsyncCall: isDeleting,
+        progressIndicator: CupertinoActivityIndicator(
+          radius: 30,
+        ),
+        child: isLoading
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 30,
+                      color: Colors.blue,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-                Text("Loading credentials")
-              ],
-            )
-          : vaultItems.length < 1
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [Center(child: Text("No credentials added"))],
-                )
-              : ListView.builder(
-                  itemCount: vaultItems.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: const Icon(
-                        Icons.safety_check,
-                        color: Colors.blue,
-                        size: 35,
-                      ),
-                      title: Text(vaultItems[index].account),
-                      subtitle: Text(vaultItems[index].password),
-                      trailing: SizedBox(
-                        width: 100,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.edit),
-                              ),
-                            ),
-                            Expanded(
-                              child: IconButton(
-                                onPressed: () {
-                                  final docVault = FirebaseFirestore.instance
-                                      .collection('vault')
-                                      .doc();
-
-                                  docVault.delete();
-                                },
-                                icon: const Icon(
-                                  Icons.delete_outlined,
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Text("Loading credentials")
+                ],
+              )
+            : vaultItems.length < 1
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [Center(child: Text("No credentials added"))],
+                  )
+                : ListView.builder(
+                    itemCount: vaultItems.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        leading: const Icon(
+                          Icons.safety_check,
+                          color: Colors.blue,
+                          size: 35,
+                        ),
+                        title: Text(vaultItems[index].account),
+                        subtitle: Text(vaultItems[index].password),
+                        trailing: SizedBox(
+                          width: 100,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: IconButton(
+                                  onPressed: () async {
+                                    Map<String, String>? updatedData =
+                                        await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EditCredential(
+                                            itemId: vaultItems[index].id,
+                                            currentAccount:
+                                                vaultItems[index].account,
+                                            currentPassword:
+                                                vaultItems[index].password),
+                                      ),
+                                    );
+                                    // If updatedData is not null (i.e., changes were made), update vaultItems
+                                    if (updatedData != null) {
+                                      setState(() {
+                                        vaultItems[index].account =
+                                            updatedData['account']!;
+                                        vaultItems[index].password =
+                                            updatedData['password']!;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.edit),
                                 ),
                               ),
-                            ),
-                          ],
+                              Expanded(
+                                child: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      isDeleting = true;
+                                    });
+
+                                    final docVault = FirebaseFirestore.instance
+                                        .collection('vault')
+                                        .doc(vaultItems[index].id);
+                                    docVault.delete();
+                                    setState(() {
+                                      vaultItems.removeAt(index);
+                                      isDeleting = false;
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_outlined,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
+      ),
       // body: Container(
       //   padding: const EdgeInsets.all(8),
       //   child: ListView(
@@ -190,8 +229,8 @@ class _CryptVaultState extends State<CryptVault> {
 
 class VaultItem {
   final String id;
-  final String account;
-  final String password;
+  late String account;
+  late String password;
   final String user;
 
   VaultItem({

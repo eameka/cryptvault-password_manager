@@ -121,7 +121,7 @@ class _AddButtonState extends State<AddButton> {
             children: [
               Text("You have"),
               isLoading
-                  ? CupertinoActivityIndicator(
+                  ? const CupertinoActivityIndicator(
                       radius: 35,
                       color: Colors.blue,
                     )
@@ -129,10 +129,10 @@ class _AddButtonState extends State<AddButton> {
                       padding: const EdgeInsets.all(10),
                       child: Text(
                         vaultItems.length.toString(),
-                        style: TextStyle(color: Colors.blue, fontSize: 40),
+                        style: const TextStyle(color: Colors.blue, fontSize: 40),
                       ),
                     ),
-              Text("credentials in your vault."),
+              const Text("credentials in your vault."),
               Padding(
                 padding: const EdgeInsets.only(top: 15.0),
                 child: OutlinedButton(
