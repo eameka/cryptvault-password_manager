@@ -7,7 +7,8 @@ import 'package:mini/dashscreen.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 class CryptVault extends StatefulWidget {
-  const CryptVault({Key? key}) : super(key: key);
+  final String source;
+  const CryptVault({Key? key, required this.source}) : super(key: key);
 
   @override
   _CryptVaultState createState() => _CryptVaultState();
@@ -74,12 +75,16 @@ class _CryptVaultState extends State<CryptVault> {
         title: const Text('All Credentials'),
         leading: IconButton(
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Dashscreen(),
-              ),
-            );
+            if (widget.source == "login_screen") {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Dashscreen(),
+                ),
+              );
+            }
           },
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
@@ -225,18 +230,4 @@ class _CryptVaultState extends State<CryptVault> {
       // ),
     );
   }
-}
-
-class VaultItem {
-  final String id;
-  late String account;
-  late String password;
-  final String user;
-
-  VaultItem({
-    required this.id,
-    required this.account,
-    required this.password,
-    required this.user,
-  });
 }

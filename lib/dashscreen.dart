@@ -129,7 +129,8 @@ class _AddButtonState extends State<AddButton> {
                       padding: const EdgeInsets.all(10),
                       child: Text(
                         vaultItems.length.toString(),
-                        style: const TextStyle(color: Colors.blue, fontSize: 40),
+                        style:
+                            const TextStyle(color: Colors.blue, fontSize: 40),
                       ),
                     ),
               const Text("credentials in your vault."),
@@ -140,7 +141,7 @@ class _AddButtonState extends State<AddButton> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CryptVault(),
+                          builder: (context) => CryptVault(source: 'dashboard_screen'),
                         ),
                       );
                     },
@@ -285,7 +286,7 @@ class MyCustomFormState extends State<MyCustomForm> {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => CryptVault(),
+                                          builder: (context) => CryptVault(source: 'dashboard_screen'),
                                         ),
                                       );
                                     },
@@ -357,8 +358,8 @@ class InsertResponse {
 
 class VaultItem {
   final String id;
-  final String account;
-  final String password;
+  late String account;
+  late String password;
   final String user;
 
   VaultItem({

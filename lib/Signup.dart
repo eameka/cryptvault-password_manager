@@ -184,7 +184,63 @@ class _MySignupState extends State<MySignup> {
                     children: [
                       TextButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, 'Login');
+                            if (emailcontroller.text == "") {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return CupertinoAlertDialog(
+                                      title: const Text('Alert'),
+                                      content: const Text(
+                                          "Email field cannot be empty"),
+                                      actions: [
+                                        CupertinoDialogAction(
+                                          child: const Text("Ok"),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                        )
+                                      ],
+                                    );
+                                  });
+                            } else {
+                              showSignInDialog(
+                                  context); // Show the Cupertino-style alert dialog with activity indicator
+                              signInWithEmail(emailcontroller.text,
+                                      emailcontroller.text)
+                                  .then((value) => {
+                                        Navigator.pop(
+                                            context), // Close the dialog
+                                        print(
+                                            "value==================================== $value"),
+                                        if (value.toString() ==
+                                            "[firebase_auth/user-not-found] There is no user record corresponding to this identifier. The user may have been deleted.")
+                                          {
+                                            showDialog(
+                                              context: context,
+                                              builder: (builder) {
+                                                return CupertinoAlertDialog(
+                                                  title: const Text("Alert"),
+                                                  content: const Text(
+                                                      "Email account not registered."),
+                                                  actions: [
+                                                    CupertinoDialogAction(
+                                                      child: const Text("Ok"),
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                    )
+                                                  ],
+                                                );
+                                              },
+                                            )
+                                          }
+                                        else
+                                          {
+                                            Navigator.pushNamed(
+                                                context, 'Login')
+                                          }
+                                      });
+                            }
                           },
                           child: const Text(
                             'Login',
@@ -232,6 +288,7 @@ class _MySignupState extends State<MySignup> {
 // }
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
+
 Future<Object?> signUpWithEmail(String email, String password) async {
   try {
     final credential =
@@ -255,6 +312,20 @@ Future<Object?> signUpWithEmail(String email, String password) async {
   }
 }
 
+Future<Object?> signInWithEmail(String email, String password) async {
+  try {
+    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    return credential.user;
+  } catch (e) {
+    print("Error creating user: $e");
+    return e;
+  }
+}
+
 void showSignUpDialog(BuildContext context) {
   showDialog(
     context: context,
@@ -262,6 +333,25 @@ void showSignUpDialog(BuildContext context) {
     builder: (BuildContext context) {
       return const CupertinoAlertDialog(
         title: Text("Signing Up"),
+        content: Column(
+          children: [
+            CupertinoActivityIndicator(),
+            SizedBox(height: 16),
+            Text("Please wait..."),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+void showSignInDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return const CupertinoAlertDialog(
+        title: Text("Signing In"),
         content: Column(
           children: [
             CupertinoActivityIndicator(),
