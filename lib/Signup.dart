@@ -254,7 +254,7 @@ class _MySignupState extends State<MySignup> {
                                                   ],
                                                 );
                                               },
-                                            )
+                                            ),
                                           }
                                         else if (value.toString() ==
                                             "[firebase_auth/invalid-email] The email address is badly formatted.")
